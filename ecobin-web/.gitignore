@@ -1,0 +1,27 @@
+# ── Dependencies ──
+node_modules/
+
+# ── Next.js ──
+.next/
+out/
+
+# ── Environment ──
+.env.local
+.env*.local
+
+# ── IDE ──
+.vscode/
+.idea/
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+
+# ── Debug ──
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── TypeScript ──
+*.tsbuildinfo
+next-env.d.ts
