@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/mark-offline",
-      "schedule": "*/10 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
