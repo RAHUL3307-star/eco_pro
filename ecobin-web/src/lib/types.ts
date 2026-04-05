@@ -5,7 +5,7 @@
 
 export type SectorType = "organic" | "inorganic" | "metal";
 export type MemberRole = "owner" | "member";
-export type AlertType = "bin_full" | "bin_cleared";
+export type AlertType = "bin_full" | "bin_cleared" | "gas_danger";
 
 export interface Profile {
   id: string;
@@ -21,6 +21,8 @@ export interface Bin {
   last_seen_at: string;
   api_key: string;
   created_at: string;
+  gas_level: number;    // Latest MQ sensor ADC reading (0–4095). May be 0 if column not yet added.
+  gas_danger: boolean;  // true = harmful gas currently detected
 }
 
 export interface BinMember {

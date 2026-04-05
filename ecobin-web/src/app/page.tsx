@@ -7,7 +7,7 @@
  * All animations are CSS-only except scroll parallax and intersection observer triggers.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 /* ═══════════════════════════════════════════════════════════════
@@ -198,7 +198,7 @@ export default function LandingPage() {
             >
               {[
                 { icon:"⚡",title:"Auto-Sort",desc:"Sensors detect moisture, gas, and metal to classify waste type instantly.",color:"#10B981",bg:"rgba(16,185,129,0.08)",delay:"1" },
-                { icon:"🪙",title:"Earn EcoCoins",desc:"10 coins per correct manual sort. Tap your RFID card to claim rewards.",color:"#FBBF24",bg:"rgba(251,191,36,0.08)",delay:"2" },
+                { icon:"🪙",title:"Earn EcoCoins",desc:"10 coins for proper manual sort, 1 coin for auto-sort. Tap your RFID card to claim.",color:"#FBBF24",bg:"rgba(251,191,36,0.08)",delay:"2" },
                 { icon:"📊",title:"Live Dashboard",desc:"Real-time bin monitoring from anywhere. Fill levels, alerts, and analytics.",color:"#3B82F6",bg:"rgba(59,130,246,0.08)",delay:"3" },
               ].map((f) => (
                 <div
@@ -248,7 +248,7 @@ export default function LandingPage() {
                   <div style={{
                     width:64,height:64,borderRadius:"50%",margin:"0 auto 20px",
                     background:`rgba(${step.color === "#10B981" ? "16,185,129" : step.color === "#F59E0B" ? "245,158,11" : step.color === "#3B82F6" ? "59,130,246" : "251,191,36"},0.12)`,
-                    border:`2px solid ${step.color}33`,
+                    border:`2px solid ${step.color}88`,
                     display:"flex",alignItems:"center",justifyContent:"center",
                     fontFamily:"var(--font-space-grotesk),sans-serif",fontSize:"1.5rem",fontWeight:700,color:step.color,
                   }}>
@@ -268,7 +268,7 @@ export default function LandingPage() {
             {[
               { value:"3",label:"Waste Types",color:"#10B981",glow:"rgba(16,185,129,0.15)" },
               { value:"10",label:"Coins Per Sort",color:"#FBBF24",glow:"rgba(251,191,36,0.15)" },
-              { value:"2",label:"Second Sort Time",color:"#3B82F6",glow:"rgba(59,130,246,0.15)",prefix:"<",suffix:"s" },
+              { value:"2",label:"Sort Time",color:"#3B82F6",glow:"rgba(59,130,246,0.15)",prefix:"<",suffix:"s" },
               { value:"24",label:"Hour Monitoring",color:"#A78BFA",glow:"rgba(167,139,250,0.15)",suffix:"/7" },
             ].map((stat,i) => (
               <div
@@ -319,7 +319,8 @@ export default function LandingPage() {
             </div>
             <div style={{ display:"flex",gap:32 }}>
               {["Features","Dashboard","GitHub"].map((l) => (
-                <a key={l} href={l === "Dashboard" ? "/dashboard" : l === "GitHub" ? "#" : `#${l.toLowerCase()}`}
+                <a key={l} href={l === "Dashboard" ? "/dashboard" : l === "GitHub" ? "https://github.com/RAHUL3307-star/eco-pro" : `#${l.toLowerCase()}`}
+                  target={l === "GitHub" ? "_blank" : undefined} rel={l === "GitHub" ? "noopener noreferrer" : undefined}
                   style={{ fontSize:"0.85rem",color:"#64748B",textDecoration:"none" }}>{l}</a>
               ))}
             </div>
@@ -337,6 +338,8 @@ export default function LandingPage() {
    NAVBAR COMPONENT
    ═══════════════════════════════════════════════════════════════ */
 function NavBar() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   useEffect(() => {
     const nav = document.getElementById("eco-nav");
     const onScroll = () => {
@@ -379,10 +382,37 @@ function NavBar() {
         <Link href="/signup" style={{ padding:"8px 20px",borderRadius:10,fontSize:"0.85rem",fontWeight:600,background:"linear-gradient(135deg,#10B981,#059669)",color:"#fff",textDecoration:"none",boxShadow:"0 0 20px rgba(16,185,129,0.2)" }}>
           Get Started
         </Link>
+        <button 
+          className="mobile-menu-btn" 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          style={{ display: "none", background: "transparent", border: "none", color: "#F1F5F9", cursor: "pointer", padding: "8px", marginLeft: "4px" }}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
       </div>
+
+      {mobileMenuOpen && (
+        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "rgba(6,6,8,0.98)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "16px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
+          {["Features","How it works","Rewards"].map((l) => (
+            <a key={l} href={`#${l.toLowerCase().replace(/ /g,"-")}`}
+              onClick={() => setMobileMenuOpen(false)}
+              style={{ padding:"12px 0",fontSize:"1rem",color:"#F1F5F9",textDecoration:"none", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            >{l}</a>
+          ))}
+          <Link href="/login" onClick={() => setMobileMenuOpen(false)} style={{ padding:"12px 0",fontSize:"1rem",color:"#F1F5F9",textDecoration:"none", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            Login
+          </Link>
+        </div>
+      )}
+
       <style jsx>{`
         @media(min-width:768px) {
           .nav-link-desktop { display:inline-flex!important }
+        }
+        @media(max-width:767px) {
+          .mobile-menu-btn { display:block!important }
         }
       `}</style>
     </nav>

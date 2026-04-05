@@ -416,7 +416,7 @@ export default function SettingsPage() {
               <div className="glass-card p-6">
                 <h3 className="font-heading font-semibold mb-2">Update Your RFID Card</h3>
                 <p className="text-xs mb-4" style={{ color: "var(--text-muted)" }}>
-                  Tap your RFID card on the EcoBin reader and note the UID shown on the OLED screen,
+                  Tap your RFID card on the EcoBin reader and note the UID printed in the Arduino IDE Serial Monitor (ESP32),
                   then enter it below. Format: 8 hex characters (e.g., A1B2C3D4).
                 </p>
                 <div className="flex gap-2">

@@ -11,19 +11,20 @@
  * How it works:
  * - On mount, uses the server-fetched initial data (instant first paint)
  * - Sets up a 10-second polling interval to fetch fresh data
- * - Compares new data with current state to avoid unnecessary re-renders
+ * - Polls sectors, waste_events, alerts AND bins (for live gas updates)
  * - Shows "● Live" indicator when polling is active
  * - Automatically handles errors and retries
  */
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase/client";
-import type { Sector, WasteEvent, Alert } from "@/lib/types";
+import type { Bin, Sector, WasteEvent, Alert } from "@/lib/types";
 
 interface RealtimeDashboardState {
   sectors: Sector[];
   recentEvents: WasteEvent[];
   unreadAlerts: Alert[];
+  liveBin: Bin | null;   // Live-polled bin data (gas_level, gas_danger, is_online, etc.)
   isConnected: boolean;
 }
 
@@ -45,17 +46,18 @@ export function useRealtimeDashboard({
   const [sectors, setSectors] = useState<Sector[]>(initialSectors);
   const [recentEvents, setRecentEvents] = useState<WasteEvent[]>(initialEvents);
   const [unreadAlerts, setUnreadAlerts] = useState<Alert[]>(initialAlerts);
+  const [liveBin, setLiveBin] = useState<Bin | null>(null);
   const [isConnected, setIsConnected] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isMountedRef = useRef(true);
 
-  // Fetch latest data from Supabase
+  // Fetch latest data from Supabase — all 4 sources in parallel
   const fetchDashboardData = useCallback(async () => {
     if (!binId) return;
 
     try {
-      // Fetch all three data sources in parallel for speed
-      const [sectorsRes, eventsRes, alertsRes] = await Promise.all([
+      // Fetch all four data sources in parallel for speed
+      const [sectorsRes, eventsRes, alertsRes, binRes] = await Promise.all([
         supabase
           .from("sectors")
           .select("*")
@@ -74,6 +76,13 @@ export function useRealtimeDashboard({
           .eq("bin_id", binId)
           .eq("is_read", false)
           .order("created_at", { ascending: false }),
+
+        // Poll bins table to get live gas_level, gas_danger, is_online, last_seen_at
+        supabase
+          .from("bins")
+          .select("*")
+          .eq("id", binId)
+          .single(),
       ]);
 
       // Only update state if component is still mounted
@@ -89,6 +98,10 @@ export function useRealtimeDashboard({
 
       if (alertsRes.data) {
         setUnreadAlerts(alertsRes.data as Alert[]);
+      }
+
+      if (binRes.data) {
+        setLiveBin(binRes.data as Bin);
       }
 
       setIsConnected(true);
@@ -122,5 +135,5 @@ export function useRealtimeDashboard({
     };
   }, [binId, fetchDashboardData]);
 
-  return { sectors, recentEvents, unreadAlerts, isConnected };
+  return { sectors, recentEvents, unreadAlerts, liveBin, isConnected };
 }

@@ -1,0 +1,13 @@
+# Ignore Arduino & ESP32 Code Folders
+ArduinoSlave/
+EcoBin/
+
+# Ignore all markdown files except README
+*.md
+!README.md
+
+# Ignore environment variables/secrets
+.env
+.env.local
+.env.*
+!.env.example

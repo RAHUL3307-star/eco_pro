@@ -60,7 +60,7 @@ export default function SectorCard({
     <div
       className="glass-card relative overflow-hidden p-6"
       style={{
-        animation: `slideUp 0.6s ease-out ${animationDelay}s both, floatAnim 6s ease-in-out ${animationDelay + 1}s infinite`,
+        animation: `slideUp 0.6s ease-out ${animationDelay}s both`,
         willChange: "transform",
         borderColor: isFull ? "rgba(239,68,68,0.4)" : undefined,
         boxShadow: isFull

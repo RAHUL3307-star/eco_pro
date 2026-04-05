@@ -15,10 +15,13 @@
 
 import { useState, useEffect } from "react";
 import { useRealtimeDashboard } from "@/hooks/useRealtimeDashboard";
+import { useNotifications } from "@/hooks/useNotifications";
 import SectorCard from "@/components/dashboard/SectorCard";
 import CoinCounter from "@/components/dashboard/CoinCounter";
 import ActivityFeed from "@/components/dashboard/ActivityFeed";
 import AlertBanner from "@/components/dashboard/AlertBanner";
+import GasDangerBanner from "@/components/dashboard/GasDangerBanner";
+import NotificationToast from "@/components/dashboard/NotificationToast";
 import type { Bin, Profile, Sector, WasteEvent, Alert, SectorType } from "@/lib/types";
 
 interface DashboardClientProps {
@@ -49,14 +52,28 @@ export default function DashboardClient({
   initialEvents,
   initialAlerts,
 }: DashboardClientProps) {
-  // Subscribe to real-time updates
-  const { sectors, recentEvents, unreadAlerts, isConnected } =
+  // Subscribe to real-time updates (polling every 10s)
+  const { sectors, recentEvents, unreadAlerts, liveBin, isConnected } =
     useRealtimeDashboard({
       binId: bin.id,
       initialSectors,
       initialEvents,
       initialAlerts,
     });
+
+  // Notification system: browser push + in-app toast for bin_full alerts
+  const { toastAlert, dismissToast, permission, requestPermission } =
+    useNotifications({ unreadAlerts });
+
+  // Request browser notification permission on first dashboard load
+  // (must be triggered by user interaction; this fires after mount)
+  useEffect(() => {
+    if (permission === "default") {
+      // Small delay so the page is fully painted before the prompt
+      const t = setTimeout(() => requestPermission(), 2000);
+      return () => clearTimeout(t);
+    }
+  }, [permission, requestPermission]);
 
   // Track recently earned coins for the popup animation
   const [recentlyEarned, setRecentlyEarned] = useState<number | null>(null);
@@ -95,10 +112,48 @@ export default function DashboardClient({
       }
   );
 
+  // Derive gas danger state from alerts or bin data
+  // Use liveBin (updated every 10s via polling) if available, else fall back to server-side bin prop
+  const effectiveBin = liveBin ?? bin;
+  const gasDangerAlert = unreadAlerts.find((a) => a.alert_type === "gas_danger");
+  const isGasDanger    = !!gasDangerAlert || !!(effectiveBin.gas_danger);
+  const currentGasLevel = effectiveBin.gas_level ?? 0;
+
+  // Filter out gas_danger alerts from the regular AlertBanner
+  // (they are shown in the dedicated GasDangerBanner instead)
+  const nonGasAlerts = unreadAlerts.filter((a) => a.alert_type !== "gas_danger");
+
   return (
     <div className="space-y-6">
-      {/* ── Alert Banners ── */}
-      <AlertBanner alerts={unreadAlerts} />
+      {/* ── Floating notification toast (top-right, bin_full alerts) ── */}
+      <NotificationToast alert={toastAlert} onDismiss={dismissToast} />
+
+      {/* ── Gas Danger Banner (shown prominently above everything when danger active) ── */}
+      <GasDangerBanner
+        gasDanger={isGasDanger}
+        gasLevel={currentGasLevel}
+        binName={bin.bin_name}
+      />
+
+      {/* ── Notification permission prompt (shown only when blocked/denied) ── */}
+      {permission === "denied" && (
+        <div
+          className="rounded-xl px-4 py-3 flex items-center gap-3 text-xs"
+          style={{
+            background: "rgba(245,158,11,0.08)",
+            border: "1px solid rgba(245,158,11,0.2)",
+          }}
+        >
+          <span style={{ fontSize: "16px" }}>🔔</span>
+          <span style={{ color: "rgba(245,158,11,0.9)" }}>
+            Browser notifications are blocked. Enable them in your browser settings
+            to receive bin-full alerts.
+          </span>
+        </div>
+      )}
+
+      {/* ── Alert Banners (bin full / bin cleared — excludes gas_danger) ── */}
+      <AlertBanner alerts={nonGasAlerts} />
 
       {/* ── Bin Status Bar ── */}
       <div
@@ -128,6 +183,19 @@ export default function DashboardClient({
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Air Quality Status */}
+          {!isGasDanger && (
+            <span
+              className="text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5"
+              style={{
+                background: "rgba(16,185,129,0.1)",
+                color: "#10B981",
+                border: "1px solid rgba(16,185,129,0.2)",
+              }}
+            >
+              Air Quality: Safe
+            </span>
+          )}
           {/* Realtime connection status */}
           <span
             className="text-xs px-2.5 py-1 rounded-full"
